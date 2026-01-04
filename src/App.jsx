@@ -4,7 +4,7 @@ import './App.css'
 function Navigation({setPage}) {
   return (
     <div className='w-screen flex flex-row gap-20 h-14 justify-center p-4 font-bold bg-amber-500 text-black text-sm md:text-base'>
-      <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(1)}>Push Up Challenge 2</a></h1>
+      <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(1)}>Push Up Challenge</a></h1>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(2)}>Pull Up Challenge</a></h1>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(3)}>About</a></h1>
     </div>
