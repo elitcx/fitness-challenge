@@ -3,7 +3,7 @@ import './App.css'
 
 function Navigation({setPage}) {
   return (
-    <div className='w-screen flex flex-row gap-20 h-14 justify-center p-4 font-bold bg-amber-500 text-black text-sm md:text-base'>
+    <div className='w-screen flex flex-row gap-20 h-14 justify-center p-4 font-bold bg-amber-500 text-black text-sm md:text-base text-center'>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(1)}>Push Up Challenge</a></h1>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(2)}>Pull Up Challenge</a></h1>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(3)}>About</a></h1>
@@ -61,10 +61,10 @@ function PushUpPage(){
 
   return (
     <div className='flex flex-col justify-center items-center text-3xl h-full'>
-      <h1 className='text-5xl text-green-500 font-bold mb-16 transform transition duration-200 hover:scale-105'>Push Up Challenge</h1>
+      <h1 className='text-3xl md:text-5xl text-green-500 font-bold mb-16 transform transition duration-200 hover:scale-105 text-center'>Push Up Challenge</h1>
       <p>Push Ups Left Today:</p>
       <p className='text-amber-300 m-4 text-6xl transform transition duration-200 md:hover:scale-110'><b>{remaining ? remaining : <p className='text-3xl text-green-400 text-center'>Congratulations! You have finished your daily pushups!</p>}</b></p>
-      <p>Input number of Push Ups done:</p>
+      <p className='text-center'>Input number of Push Ups done:</p>
       <form onSubmit={handleSubmit} className='flex flex-col gap-2 items-center p-4'>
         <div className='flex flex-row text-3xl gap-2'>
           <div className='w-14 text-center items-center flex justify-center text-amber-200 transform transition duration-200 hover:scale-105'><button type='button' className='cursor-pointer' onClick={() => setInput(Number(input)-10)}>-10</button></div>
@@ -137,14 +137,14 @@ function PullUpPage() {
 
   return (
     <div className="flex flex-col justify-center items-center text-3xl h-full">
-      <h1 className='text-5xl text-orange-400 font-bold mb-16 transform transition duration-200 hover:scale-105'>Pull Up Challenge</h1>
+      <h1 className='text-3xl md:text-5xl text-orange-400 font-bold mb-16 transform transition duration-200 hover:scale-105 text-center'>Pull Up Challenge</h1>
       <p>Pull Ups Left Today:</p>
       <p className="text-amber-300 m-4 text-6xl transform transition duration-200 md:hover:scale-110">
         <b>
           {remaining > 0 ? remaining : <p className="text-3xl text-green-400">Congratulations! You have finished your daily pull ups!</p>}
         </b>
       </p>
-      <p>Input number of Pull Ups done:</p>
+      <p className='text-center'>Input number of Pull Ups done:</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 items-center p-4">
         <div className="flex flex-row text-3xl gap-2">
           <div className="w-14 text-center items-center flex justify-center text-amber-200 transform transition duration-200 hover:scale-105">
