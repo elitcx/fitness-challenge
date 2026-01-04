@@ -139,9 +139,9 @@ function PullUpPage() {
     <div className="flex flex-col justify-center items-center text-3xl h-full">
       <h1 className='text-3xl md:text-5xl text-orange-400 font-bold mb-16 transform transition duration-200 hover:scale-105 text-center'>Pull Up Challenge</h1>
       <p>Pull Ups Left Today:</p>
-      <p className="text-amber-300 m-4 text-6xl transform transition duration-200 md:hover:scale-110">
+      <p className="text-amber-300 m-4 text-6xl transform transition duration-200 md:hover:scale-110 text-center">
         <b>
-          {remaining > 0 ? remaining : <p className="text-3xl text-green-400">Congratulations! You have finished your daily pull ups!</p>}
+          {remaining > 0 ? remaining : <p className="text-3xl text-green-400 text-center">Congratulations! You have finished your daily pull ups!</p>}
         </b>
       </p>
       <p className='text-center'>Input number of Pull Ups done:</p>
