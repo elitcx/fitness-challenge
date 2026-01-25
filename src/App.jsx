@@ -26,6 +26,11 @@ function dayOfYearToDate(day, year = new Date().getFullYear()) {
   return date;
 }
 
+const toLocalISO = (date) =>
+  date.getFullYear() + '-' +
+  String(date.getMonth() + 1).padStart(2, '0') + '-' +
+  String(date.getDate()).padStart(2, '0');
+
 function PushUpPage(){
   const today = new Date();
   const todayDay = getDayOfYear(today);
@@ -49,7 +54,7 @@ function PushUpPage(){
 
       newMissed.push({
         dayOfYear: savedDay,
-        dateISO: date.toISOString().slice(0,10),
+        dateISO: toLocalISO(date),
         remaining: savedRemaining
       });
     }
@@ -60,7 +65,7 @@ function PushUpPage(){
 
       newMissed.push({
         dayOfYear: d,
-        dateISO: date.toISOString().slice(0, 10),
+        dateISO: toLocalISO(date),
         remaining: getDayOfYear(date)
       });
     }
@@ -98,7 +103,10 @@ function PushUpPage(){
 
   useEffect(() => {
     localStorage.setItem('pushupRemaining', remaining);
-    localStorage.setItem('pushupLastDay', todayDay);
+
+    if (remaining === 0){
+      localStorage.setItem('pushupLastDay', todayDay);
+    }
   }, [remaining, todayDay]);
 
   const [input, setInput] = useState('');
@@ -233,7 +241,7 @@ function PullUpPage() {
       const date = dayOfYearToDate(savedDay, year);
       newMissed.push({
         dayOfYear: savedDay,
-        dateISO: date.toISOString().slice(0, 10),
+        dateISO: toLocalISO(date),
         remaining: getWeekOfYearISO(date)
       });
     }
@@ -243,7 +251,7 @@ function PullUpPage() {
       const date = dayOfYearToDate(d, year);
       newMissed.push({
         dayOfYear: d,
-        dateISO: date.toISOString().slice(0, 10),
+        dateISO: toLocalISO(date),
         remaining: getWeekOfYearISO(date)
       });
     }
