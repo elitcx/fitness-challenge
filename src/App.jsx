@@ -101,13 +101,10 @@ function PushUpPage(){
   });
 
 
-  useEffect(() => {
-    localStorage.setItem('pushupRemaining', remaining);
-
-    if (remaining === 0){
-      localStorage.setItem('pushupLastDay', todayDay);
-    }
-  }, [remaining, todayDay]);
+useEffect(() => {
+  localStorage.setItem('pushupRemaining', remaining);
+  localStorage.setItem('pushupLastDay', todayDay);
+}, [remaining, todayDay]);
 
   const [input, setInput] = useState('');
 
