@@ -3,7 +3,7 @@ import './App.css'
 
 function Navigation({setPage}) {
   return (
-    <div className='w-screen flex flex-row gap-20 h-14 justify-center p-4 font-bold bg-amber-500 text-black text-sm md:text-base text-center items-center'>
+    <div className='w-full flex flex-row gap-6 md:gap-20 h-14 justify-center p-4 font-bold bg-amber-500 text-black text-sm md:text-base text-center items-center'>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(1)}>Push Up Challenge</a></h1>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(2)}>Pull Up Challenge</a></h1>
       <h1><a className="cursor-pointer transform transition duration-200 hover:scale-105 hover:text-red-500 inline-block" onClick={() => setPage(3)}>About</a></h1>
@@ -18,29 +18,88 @@ const getDayOfYear = (date) => {
   return Math.floor(diff / oneDay);
 };
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function dayOfYearToDate(day, year = new Date().getFullYear()) {
+  const date = new Date(year, 0); // Jan 1
+  date.setDate(day);
+  return date;
+}
+
 function PushUpPage(){
   const today = new Date();
-  const dayOfYear = getDayOfYear(today);
-  const initialPushUps = dayOfYear;
+  const todayDay = getDayOfYear(today);
+  const baseTarget = todayDay;
+
+  const savedDay = Number(localStorage.getItem('pushupLastDay'));
+  const savedRemaining = Number(localStorage.getItem('pushupRemaining')) || 0;
+  const savedMissedDates = JSON.parse(localStorage.getItem('pushupMissedDates')) || [];
+
+  const [missedDates, setMissedDates] = useState(savedMissedDates);
   
 
-  const [remaining, setRemaining] = useState(() => {
-    const savedPushups = localStorage.getItem('remainingPushUps');
-    const savedDate = localStorage.getItem('pushUpDate');
-    const todayStr = new Date().toDateString(); // e.g. "Sat Jan 04 2026"
+  useEffect(() => {
+    if (!savedDay || savedDay >= todayDay) return;
+
+    const newMissed = [];
+    const year = today.getFullYear();
+    // Yesterday wasn't completed
+    if (savedRemaining > 0) {
+      const date = dayOfYearToDate(savedDay, year);
+
+      newMissed.push({
+        dayOfYear: savedDay,
+        dateISO: date.toISOString().slice(0,10),
+        remaining: savedRemaining
+      });
+    }
+
+    // Fully missed days
+    for (let d = savedDay + 1; d < todayDay; d++) {
+      const date = dayOfYearToDate(d, year);
+
+      newMissed.push({
+        dayOfYear: d,
+        dateISO: date.toISOString().slice(0, 10),
+        remaining: getDayOfYear(date)
+      });
+    }
+
+    const existingDays = new Set(savedMissedDates.map(d => d.dayOfYear));
+    const filteredNewMissed = newMissed.filter(
+      d => !existingDays.has(d.dayOfYear)
+    );
+
+    if (filteredNewMissed.length > 0) {
+      const updated = [...savedMissedDates, ...filteredNewMissed];
+      setMissedDates(updated);
+      localStorage.setItem(
+        'pushupMissedDates',
+        JSON.stringify(updated)
+      );
+    }
+
     
-    if (savedPushups !== null && savedDate === todayStr) {
-      return parseInt(savedPushups);
-    } else {
-      // Either no saved pushups, or it's a new day → reset
-      localStorage.setItem('pushUpDate', todayStr);
-      return initialPushUps; // or initialPushUps
-  }
-});
+  // run once on mount
+  // eslint-disable-next-line
+  }, []);
+
+  
+
+
+  const [remaining, setRemaining] = useState(() => {
+    if (savedDay && savedDay === todayDay){
+      return savedRemaining;
+    } else{
+      return baseTarget;
+    }
+  });
+
 
   useEffect(() => {
-    localStorage.setItem("remainingPushUps", remaining);
-  }, [remaining]);
+    localStorage.setItem('pushupRemaining', remaining);
+    localStorage.setItem('pushupLastDay', todayDay);
+  }, [remaining, todayDay]);
 
   const [input, setInput] = useState('');
 
@@ -52,18 +111,31 @@ function PushUpPage(){
       if(left < 0){
         setRemaining(0);
       } else {
-        setRemaining(prev => Math.min(initialPushUps, prev-done))
+        setRemaining(prev => Math.min(baseTarget, prev-done))
       }
       setInput('');
     }
   }
+
+  const sortedMissedDates = [...missedDates].sort(
+    (a, b) => a.dayOfYear - b.dayOfYear
+  );
+
+  const removeMissedDate = (dayOfYear) => {
+  const updated = missedDates.filter(d => d.dayOfYear !== dayOfYear);
+  setMissedDates(updated);
+  localStorage.setItem(
+    'pushupMissedDates',
+    JSON.stringify(updated)
+  );
+};
 
 
   return (
     <div className='flex flex-col justify-center items-center text-3xl h-full'>
       <h1 className='text-3xl md:text-5xl text-green-500 font-bold mb-16 transform transition duration-200 hover:scale-105 text-center'>Push Up Challenge</h1>
       <p>Push Ups Left Today:</p>
-      <p className='text-amber-300 m-4 text-6xl transform transition duration-200 md:hover:scale-110'><b>{remaining ? remaining : <p className='text-3xl text-green-400 text-center'>Congratulations! You have finished your daily pushups!</p>}</b></p>
+      {remaining ? <p className="text-6xl text-amber-300 font-bold transform transition duration-200 md:hover:scale-110">{remaining}</p> : <p className='text-3xl text-green-400 text-center font-bold transform transition duration-200 md:hover:scale-110'>Congratulations! You have finished your daily pushups!</p>}
       <p className='text-center'>Input number of Push Ups done:</p>
       <form onSubmit={handleSubmit} className='flex flex-col gap-2 items-center p-4'>
         <div className='flex flex-row text-3xl gap-2'>
@@ -76,11 +148,44 @@ function PushUpPage(){
           <div className='w-14 text-center items-center flex justify-center text-amber-200 transform transition duration-200 hover:scale-105'><button type='button' className='cursor-pointer' onClick={() => setInput(Number(input)+10)}>+10</button></div>
         </div>
         <div className='flex flex-row gap-4'>
-        <button type='button' className='cursor-pointer bg-red-400 rounded-md px-2 py-1 text-2xl text-black font-bold transform transition duration-200 hover:scale-105' onClick={() => setRemaining(initialPushUps)}>Reset🔄</button>
+        <button type='button' className='cursor-pointer bg-red-400 rounded-md px-2 py-1 text-2xl text-black font-bold transform transition duration-200 hover:scale-105' onClick={() => {
+          if (window.confirm("Reset today's progress?")) {
+            setRemaining(baseTarget);
+          }
+        }}>Reset🔄</button>
         <button type='submit' className='cursor-pointer bg-amber-300 rounded-md px-2 py-1 text-2xl text-black font-bold transform transition duration-200 hover:scale-105'>Confirm</button>
         
         </div>
       </form>
+        {sortedMissedDates.length > 0 && (
+          <div className="mt-8 text-lg text-center">
+            <h2 className="text-red-400 font-bold mb-2">Missed Days</h2>
+            <ul>
+              {sortedMissedDates.map((d) => (
+                <li
+                  key={d.dayOfYear}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <span>
+                    {new Date(d.dateISO).toLocaleDateString()} — {d.remaining}
+                  </span>
+
+                  <button
+                    className="text-red-400 hover:text-red-600 text-xl font-bold"
+                    onClick={() => {
+                      if (window.confirm("Remove this missed day?")) {
+                        removeMissedDate(d.dayOfYear);
+                      }
+                    }}
+                    aria-label="Remove missed date"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
     </div>
   )
 }
@@ -101,27 +206,78 @@ function getWeekOfYearISO(date) {
   }
 }
 
+
+
 function PullUpPage() {
   const today = new Date();
-  const currentWeek = getWeekOfYearISO(today);
-  const initialPullUps = currentWeek; // 1 pull up per week
+  const todayDay = getDayOfYear(today);
+  const baseTarget = getWeekOfYearISO(today);
+
+  const savedDay = Number(localStorage.getItem('pullupLastDay'));
+  const savedRemaining =
+    Number(localStorage.getItem('pullupRemaining')) || 0;
+  const savedMissedDates =
+    JSON.parse(localStorage.getItem('pullupMissedDates')) || [];
+
+  const [missedDates, setMissedDates] = useState(savedMissedDates);
+
+  // Detect missed days (run once on mount)
+  useEffect(() => {
+    if (!savedDay || savedDay >= todayDay) return;
+
+    const newMissed = [];
+    const year = today.getFullYear();
+
+    // Yesterday not completed
+    if (savedRemaining > 0) {
+      const date = dayOfYearToDate(savedDay, year);
+      newMissed.push({
+        dayOfYear: savedDay,
+        dateISO: date.toISOString().slice(0, 10),
+        remaining: getWeekOfYearISO(date)
+      });
+    }
+
+    // Fully missed days
+    for (let d = savedDay + 1; d < todayDay; d++) {
+      const date = dayOfYearToDate(d, year);
+      newMissed.push({
+        dayOfYear: d,
+        dateISO: date.toISOString().slice(0, 10),
+        remaining: getWeekOfYearISO(date)
+      });
+    }
+
+    const existingDays = new Set(
+      savedMissedDates.map(d => d.dayOfYear)
+    );
+
+    const filtered = newMissed.filter(
+      d => !existingDays.has(d.dayOfYear)
+    );
+
+    if (filtered.length > 0) {
+      const updated = [...savedMissedDates, ...filtered];
+      setMissedDates(updated);
+      localStorage.setItem(
+        'pullupMissedDates',
+        JSON.stringify(updated)
+      );
+    }
+    // eslint-disable-next-line
+  }, []);
 
   const [remaining, setRemaining] = useState(() => {
-    const savedPullUps = localStorage.getItem('remainingPullUps');
-    const savedDate = localStorage.getItem('pullUpDate');
-    const todayStr = new Date().toDateString();
-
-    if (savedPullUps !== null && savedDate === todayStr) {
-      return parseInt(savedPullUps);
-    } else {
-      localStorage.setItem('pullUpDate', todayStr);
-      return initialPullUps;
+    if (savedDay && savedDay === todayDay) {
+      return savedRemaining;
     }
+    return baseTarget;
   });
 
   useEffect(() => {
-    localStorage.setItem('remainingPullUps', remaining);
-  }, [remaining]);
+    localStorage.setItem('pullupRemaining', remaining);
+    localStorage.setItem('pullupLastDay', todayDay);
+  }, [remaining, todayDay]);
 
   const [input, setInput] = useState('');
 
@@ -129,21 +285,31 @@ function PullUpPage() {
     e.preventDefault();
     const done = parseInt(input);
     if (!isNaN(done)) {
-      const left = remaining - done;
-      setRemaining(prev => Math.max(0, Math.min(initialPullUps, prev - done)));
+      setRemaining(prev =>
+        Math.max(0, Math.min(baseTarget, prev - done))
+      );
       setInput('');
     }
   };
+
+  const sortedMissedDates = [...missedDates].sort(
+    (a, b) => a.dayOfYear - b.dayOfYear
+  );
+
+  const removeMissedDate = (dayOfYear) => {
+  const updated = missedDates.filter(d => d.dayOfYear !== dayOfYear);
+  setMissedDates(updated);
+  localStorage.setItem(
+    'pullupMissedDates',
+    JSON.stringify(updated)
+  );
+};
 
   return (
     <div className="flex flex-col justify-center items-center text-3xl h-full">
       <h1 className='text-3xl md:text-5xl text-orange-400 font-bold mb-16 transform transition duration-200 hover:scale-105 text-center'>Pull Up Challenge</h1>
       <p>Pull Ups Left Today:</p>
-      <p className="text-amber-300 m-4 text-6xl transform transition duration-200 md:hover:scale-110 text-center">
-        <b>
-          {remaining > 0 ? remaining : <p className="text-3xl text-green-400 text-center">Congratulations! You have finished your daily pull ups!</p>}
-        </b>
-      </p>
+      {remaining ? <p className="text-6xl text-amber-300 font-bold transform transition duration-200 md:hover:scale-110">{remaining}</p> : <p className='text-3xl text-green-400 text-center font-bold transform transition duration-200 md:hover:scale-110'>Congratulations! You have finished your daily pull ups!</p>}
       <p className='text-center'>Input number of Pull Ups done:</p>
       <form onSubmit={handleSubmit} className="flex flex-col gap-2 items-center p-4">
         <div className="flex flex-row text-3xl gap-2">
@@ -156,10 +322,42 @@ function PullUpPage() {
           </div>
         </div>
         <div className="flex flex-row gap-4">
-          <button type="button" className="cursor-pointer bg-red-400 rounded-md px-2 py-1 text-2xl text-black font-bold transform transition duration-200 hover:scale-105" onClick={() => setRemaining(initialPullUps)}>Reset🔄</button>
+          <button type="button" className="cursor-pointer bg-red-400 rounded-md px-2 py-1 text-2xl text-black font-bold transform transition duration-200 hover:scale-105" onClick={() => setRemaining(baseTarget)}>Reset🔄</button>
           <button type="submit" className="cursor-pointer bg-amber-300 rounded-md px-2 py-1 text-2xl text-black font-bold transform transition duration-200 hover:scale-105">Confirm</button>
         </div>
       </form>
+
+      {sortedMissedDates.length > 0 && (
+        <div className="mt-8 text-lg text-center">
+          <h2 className="text-red-400 font-bold mb-2">
+            Missed Pull-Up Days
+          </h2>
+          <ul>
+            {sortedMissedDates.map((d) => (
+                <li
+                  key={d.dayOfYear}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <span>
+                    {new Date(d.dateISO).toLocaleDateString()} — {d.remaining}
+                  </span>
+
+                  <button
+                    className="text-red-400 hover:text-red-600 text-xl font-bold"
+                    onClick={() => {
+                      if (window.confirm("Remove this missed day?")) {
+                        removeMissedDate(d.dayOfYear);
+                      }
+                    }}
+                    aria-label="Remove missed date"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -183,13 +381,13 @@ function App() {
   },[page])
 
   return (
-    <div className='h-screen flex flex-col'>
-    <Navigation setPage={setPage}/>
-    <div className='flex-1 flex m-0 items-center justify-center'>
-      {page === 1 && <PushUpPage/>}
-      {page === 2 && <PullUpPage/>}
-      {page === 3 && <AboutPage/>}
-    </div>
+    <div className='h-screen w-screen flex flex-col overflow-x-hidden'>
+      <Navigation setPage={setPage}/>
+      <div className='flex-1 flex m-0 items-center justify-center w-full'>
+        {page === 1 && <PushUpPage/>}
+        {page === 2 && <PullUpPage/>}
+        {page === 3 && <AboutPage/>}
+      </div>
     </div>
   )
 }
